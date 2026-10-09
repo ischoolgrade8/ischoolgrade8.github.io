@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>AI Time</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif; }
+    body { background: linear-gradient(145deg, #f6f9fc 0%, #e6f0f5 100%); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 16px; }
+    #app { width: 100%; max-width: 1100px; height: 90vh; max-height: 900px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 40px; box-shadow: 0 25px 50px -8px rgba(0, 20, 30, 0.25); border: 1px solid rgba(255,255,255,0.5); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    .nav-header { padding: 20px 24px 8px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+    .nav-header h1 { font-size: 1.8rem; font-weight: 600; background: linear-gradient(135deg, #1e3c72, #2a5298); -webkit-background-clip: text; background-clip: text; color: transparent; flex: 1; font-family: 'Comic Sans MS', 'Comic Neue', cursive; }
+    .back-btn, .cloud-refresh-btn { background: white; border: none; width: 44px; height: 44px; border-radius: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); color: #1e3c72; font-size: 1.4rem; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.8); }
+    .back-btn:hover, .cloud-refresh-btn:hover { background: #2a5298; color: white; }
+    .view-container { flex: 1; padding: 16px; overflow-y: auto; background-size: cover; background-position: center; background-repeat: no-repeat; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+    .home-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 16px; width: 100%; height: 100%; flex: 1; }
+    .big-btn { background: white; border-radius: 32px; padding: 20px; box-shadow: 0 12px 24px -8px rgba(0,32,64,0.12); border: 1px solid rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s; color: #1e2f4b; background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; overflow: hidden; width: 100%; height: 100%; }
+    .big-btn i, .big-btn span { position: relative; z-index: 1; }
+    .big-btn i { font-size: 3rem; color: #2a5298; }
+    .big-btn span { font-size: 1.6rem; font-weight: 600; }
+    .big-btn:hover { transform: translateY(-4px); box-shadow: 0 20px 30px -10px #1e3c7250; }
+    .big-btn::before { content: ''; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.7); border-radius: 32px; z-index: 0; display: none; }
+    .big-btn.has-bg::before { display: block; }
+
+    .part-grid { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 16px; }
+    .part-card { background: white; border-radius: 28px; padding: 24px 28px; flex: 1 0 180px; box-shadow: 0 8px 18px rgba(0,0,0,0.05); text-align: center; cursor: pointer; transition: 0.15s; }
+    .part-card i { font-size: 2.5rem; color: #2e5a9c; margin-bottom: 12px; }
+    .part-card h3 { font-size: 1.8rem; font-weight: 600; }
+
+    .games-list, .aitalk-list, .classin-list, .discussion-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; width: 100%; }
+    .game-btn, .aitalk-btn, .classin-btn, .discussion-btn { background: white; padding: 18px 24px; border-radius: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 1px solid #eef4ff; font-size: 1.3rem; font-weight: 500; color: #10355e; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.15s; width: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; overflow: hidden; }
+    .game-btn i, .aitalk-btn i, .classin-btn i, .discussion-btn i { color: #2a5298; z-index: 1; position: relative; }
+    .game-btn span, .aitalk-btn span, .classin-btn span, .discussion-btn span { z-index: 1; position: relative; }
+    .game-btn::before, .aitalk-btn::before, .classin-btn::before, .discussion-btn::before { content: ''; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.7); border-radius: 40px; z-index: 0; display: none; }
+    .game-btn.has-bg::before, .aitalk-btn.has-bg::before, .classin-btn.has-bg::before, .discussion-btn.has-bg::before { display: block; }
+    .game-btn:hover, .aitalk-btn:hover, .classin-btn:hover, .discussion-btn:hover { background-color: #e3efff; }
+
+    .empty-message { grid-column: 1 / -1; text-align: center; }
+
+    .iframe-container { margin-top: 28px; background: #ffffffc0; border-radius: 36px; padding: 20px; box-shadow: inset 0 1px 4px #00000008, 0 8px 18px #00000010; backdrop-filter: blur(4px); text-align: center; }
+    iframe { border-radius: 24px; background: white; width: 100%; max-width: 500px; height: 380px; border: none; }
+
+    .setting-section { background: white; border-radius: 32px; padding: 24px; margin-bottom: 30px; box-shadow: 0 6px 14px #00000008; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; margin-bottom: 20px; }
+    .section-header .setting-title { margin-bottom: 0; font-size: 1.5rem; font-weight: 600; color: #1e3c72; display: flex; align-items: center; gap: 8px; }
+    .section-header i.fa-chevron-down { font-size: 1.2rem; color: #1e3c72; transition: transform 0.2s ease; }
+    .section-header.collapsed i.fa-chevron-down { transform: rotate(-90deg); }
+    .section-body { transition: all 0.2s ease; }
+    .section-body.hidden { display: none; }
+
+    .input-group { margin-bottom: 20px; }
+    .input-group label { display: block; font-weight: 500; margin-bottom: 6px; color: #2c3e50; }
+    .input-group input, .input-group textarea { width: 100%; padding: 14px 18px; border-radius: 40px; border: 1.5px solid #dbe4f0; font-size: 1rem; background: #fafcff; font-family: 'Comic Sans MS', 'Comic Neue', cursive; }
+    .input-group textarea { border-radius: 28px; resize: vertical; font-family: monospace; }
+    .input-group input:focus, .input-group textarea:focus { border-color: #2a5298; outline: none; background: white; }
+    .part-editor, .aitalk-editor { background: #f2f8ff; border-radius: 28px; padding: 20px; margin-top: 20px; }
+    .game-editor-item, .aitalk-editor-item { background: white; border-radius: 24px; padding: 16px; margin-bottom: 14px; border: 1px solid #cbddec; }
+    .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #406e9e; padding: 8px; border-radius: 40px; }
+    .btn-icon:hover { background: #d4e2f5; }
+    .btn-primary { background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 60px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 16px #1e3c7240; margin-right: 8px; }
+    .btn-outline { background: transparent; border: 1.5px solid #1e3c72; color: #1e3c72; padding: 12px 24px; border-radius: 60px; font-weight: 600; cursor: pointer; }
+    .flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .password-modal { position: fixed; top:0; left:0; width:100%; height:100%; background: #00000040; backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 999; }
+    .modal-card { background: white; padding: 32px; border-radius: 48px; width: 90%; max-width: 400px; }
+    .hidden { display: none !important; }
+    #snackbar { visibility: hidden; min-width: 200px; background: #1e3c72; color: white; text-align: center; border-radius: 40px; padding: 14px 24px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 10px 20px #00000020; }
+    #snackbar.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.5s; }
+    @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+    @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    .config-source-badge { background: #eef3fa; padding: 8px 16px; border-radius: 40px; font-size: 0.9rem; display: inline-block; margin-bottom: 16px; }
+    .setting-corner-btn { position: absolute; bottom: 24px; right: 24px; background: white; border: none; width: 48px; height: 48px; border-radius: 50%; box-shadow: 0 8px 16px rgba(0,0,0,0.12); color: #1e3c72; font-size: 1.4rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; transition: 0.2s; border: 1px solid rgba(255,255,255,0.8); }
+    .setting-corner-btn:hover { background: #1e3c72; color: white; }
+    .bg-upload-wrap { display: flex; gap: 8px; align-items: center; }
+    .bg-upload-wrap input[type="text"] { flex: 1; }
+    .bg-upload-wrap button { white-space: nowrap; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="nav-header">
+    <button class="back-btn" id="backButton"><i class="fas fa-arrow-left"></i></button>
+    <h1>📘 AI Time Grade 8</h1>
+    <button class="cloud-refresh-btn" id="cloudRefreshBtn" title="Sync Cloud Config"><i class="fas fa-cloud-upload-alt"></i></button>
+  </div>
+  <div id="viewContainer" class="view-container"></div>
+  <button id="settingCornerBtn" class="setting-corner-btn" title="Setting"><i class="fas fa-cog"></i></button>
+</div>
+<div id="passwordModal" class="password-modal hidden">
+  <div class="modal-card">
+    <h2 style="margin-bottom:20px; color:#1e3c72;"><i class="fas fa-lock"></i> Enter Code</h2>
+    <input type="password" id="passwordInput" placeholder="Setting password" style="width:100%; padding:16px; border-radius:60px; border:1.5px solid #ccc; margin-bottom:20px;">
+    <div class="flex-row">
+      <button class="btn-primary" id="submitPassword">Unlock</button>
+      <button class="btn-outline" id="cancelPassword">Cancel</button>
+    </div>
+    <p id="passwordError" style="color:#c0392b; margin-top:12px;"></p>
+  </div>
+</div>
+<div id="snackbar">⚙️ Operation Completed</div>
+
+<script>
+  "use strict";
+
+  // ============================================================
+  // 🔑 Supabase 配置（请替换为你自己的项目信息）
+  // ============================================================
+  const SUPABASE_URL = 'https://viqfqlgxaqmhluujsaae.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpcWZxbGd4YXFtaGx1dWpzYWFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1Mjk0MjMsImV4cCI6MjEwNzEwNTQyM30.IJI7e39v68jaY0Y54qNPuU8QY1Q2YUAVnu68RfowVdM';
+
+  (function(){
+    // ========== 后端（直连 Supabase）==========
+
+    // 1. 加载配置
+    async function loadConfigFromCloud(showSuccess = true) {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/config?id=eq.1`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        if (!response.ok) throw new Error('Load failed');
+        const data = await response.json();
+        config = { ...DEFAULT_CONFIG, ...data[0].data };
+        normalizeConfig(config);
+        configSource = 'cloud';
+        localStorage.setItem('english_integrated_config', JSON.stringify(config));
+        if (showSuccess) showSnackbar('✅ Load Success');
+        renderCurrentView();
+      } catch (err) {
+        console.warn('Load Failed', err);
+        if (showSuccess) showSnackbar('⚠️ Cloud connect failed, use local cache', true);
+        return false;
+      }
+    }
+
+    // 2. 发布配置
+    async function publishToCloud() {
+      if (!settingAuthenticated) { showSnackbar('Please access the Settings page first', true); return; }
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/config?id=eq.1`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({ data: config })
+        });
+        if (!response.ok) throw new Error('Publish failed');
+        configSource = 'cloud';
+        localStorage.setItem('english_integrated_config', JSON.stringify(config));
+        showSnackbar('🎉 Published succeeded!');
+      } catch (err) {
+        showSnackbar('❌ Publish Failed', true);
+      }
+    }
+
+    // 3. 上传图片（覆盖同名文件）
+    async function uploadImage(file, fixedFileName) {
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/site-assets/${fixedFileName}`,
+          {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'x-upsert': 'true',
+              'Content-Type': file.type || 'image/jpeg'
+            },
+            body: file
+          }
+        );
+        if (!response.ok) {
+          showSnackbar('❌ Upload failed', true);
+          return null;
+        }
+        return `${SUPABASE_URL}/storage/v1/object/public/site-assets/${fixedFileName}`;
+      } catch (error) {
+        console.error('Upload error:', error);
+        showSnackbar('❌ Upload failed', true);
+        return null;
+      }
+    }
+
+    // 4. 删除图片
+    async function deleteImageFromStorage(fixedFileName) {
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/site-assets/${fixedFileName}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          }
+        );
+        return response.ok;
+      } catch (error) {
+        console.error('Delete error:', error);
+        return false;
+      }
+    }
+
+    // 生成固定文件名
+    function getFixedFileName(fieldKey, dynamicId = null) {
+      const map = {
+        homeBgUrl: 'home_bg.jpg',
+        gamePageBgUrl: 'game_page_bg.jpg',
+        rolePlayPageBgUrl: 'roleplay_page_bg.jpg',
+        btnGameBgUrl: 'btn_game_bg.jpg',
+        btnRolePlayBgUrl: 'btn_roleplay_bg.jpg',
+        btnClassInBgUrl: 'btn_classin_bg.jpg',
+        btnAITalkBgUrl: 'btn_aitalk_bg.jpg',
+        aitalkBtnBg: `aitalk_${dynamicId}.jpg`,
+        classinBtnBg: `classin_${dynamicId}.jpg`,
+        discussionBtnBg: `discussion_${dynamicId}.jpg`,
+        gameBtnBg: `game_${dynamicId}.jpg`
+      };
+      return map[fieldKey] || null;
+    }
+
+    // 为输入框添加上传/删除按钮逻辑
+    function setupImageControls(container, fieldKey, dynamicId = null) {
+      const fixedName = getFixedFileName(fieldKey, dynamicId);
+      if (!fixedName) return;
+
+      const uploadBtn = container.querySelector('.image-upload-btn');
+      const deleteBtn = container.querySelector('.image-delete-btn');
+      const urlInput = container.querySelector('.image-url-input');
+
+      if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => {
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            showSnackbar('⏳ Uploading image...');
+            const publicUrl = await uploadImage(file, fixedName);
+            if (publicUrl && urlInput) {
+              urlInput.value = publicUrl;
+              urlInput.dispatchEvent(new Event('input'));
+              showSnackbar('✅ Image uploaded!');
+            }
+          };
+          fileInput.click();
+        });
+      }
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+          if (!urlInput || !urlInput.value) return;
+          const confirmed = confirm('Delete this background image?');
+          if (!confirmed) return;
+          showSnackbar('🗑 Deleting image...');
+          const success = await deleteImageFromStorage(fixedName);
+          if (success && urlInput) {
+            urlInput.value = '';
+            urlInput.dispatchEvent(new Event('input'));
+            showSnackbar('✅ Image deleted');
+          }
+        });
+      }
+    }
+
+    // ========== 原有配置和视图代码 ==========
+    const DEFAULT_CONFIG = {
+      settingPassword: "0808",
+      aiTalkUrl: "https://weixin.qq.com/",
+      classInUrl: "https://www.classin.com/",
+      discussionUrl: "https://discussion.example.com/",
+      aiTalkButtons: [
+        { id: "aitalk-1", name: "Topic 06 - 1", url: "https://doubao.com/bot/Ew35NrPV", bgUrl: "" },
+        { id: "aitalk-2", name: "Topic 06 - 2", url: "https://doubao.com/bot/3Ts8VUxv", bgUrl: "" },
+        { id: "aitalk-3", name: "Topic 06 - 3", url: "https://doubao.com/bot/dtyTUTvW", bgUrl: "" },
+        { id: "aitalk-4", name: "Topic 06 - 4", url: "https://doubao.com/bot/bqqTQuWx", bgUrl: "" }
+      ],
+      classInButtons: [],
+      discussionButtons: [
+        { id: "discussion-1", name: "Debate apple", url: "https://doubao.com/bot/ovuVreEm", bgUrl: "" },
+        { id: "discussion-2", name: "Debate Banana", url: "https://doubao.com/bot/VnCWIcTq", bgUrl: "" }
+      ],
+      homeBgUrl: "",
+      gamePageBgUrl: "",
+      rolePlayPageBgUrl: "",
+      btnGameBgUrl: "",
+      btnRolePlayBgUrl: "",
+      btnClassInBgUrl: "",
+      btnAITalkBgUrl: "",
+      gameParts: [
+        { id: "part1", name: "Part 1", games: [ { id: "game1", name: "Wordwall Game", embedCode: `<iframe style="max-width:100%" src="https://wordwall.net/embed/fc41e69b25a747f0a439d228a56fcf59?themeId=1&templateId=3&fontStackId=0" width="500" height="380" frameborder="0" allowfullscreen></iframe>`, bgUrl: "" } ] },
+        { id: "part2", name: "Part 2", games: [] },
+        { id: "part3", name: "Part 3", games: [] }
+      ]
+    };
+
+    let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    let currentView = 'home';
+    let currentPartId = null;
+    let settingAuthenticated = false;
+    let passwordCallback = null;
+    let configSource = 'local';
+    let expandedSections = [];
+
+    const viewContainer = document.getElementById('viewContainer');
+    const backButton = document.getElementById('backButton');
+    const cloudRefreshBtn = document.getElementById('cloudRefreshBtn');
+    const settingCornerBtn = document.getElementById('settingCornerBtn');
+    const passwordModal = document.getElementById('passwordModal');
+    const passwordInput = document.getElementById('passwordInput');
+    const submitPassword = document.getElementById('submitPassword');
+    const cancelPassword = document.getElementById('cancelPassword');
+    const passwordError = document.getElementById('passwordError');
+    const snackbar = document.getElementById('snackbar');
+
+    function showSnackbar(text, isError = false) {
+      snackbar.textContent = text || '⚙️ Operation Completed';
+      snackbar.style.background = isError ? '#b53b3b' : '#1e3c72';
+      snackbar.classList.add('show');
+      setTimeout(() => { snackbar.classList.remove('show'); snackbar.style.background = '#1e3c72'; }, 2800);
+    }
+
+    function updateSettingCornerVisibility() {
+      settingCornerBtn.classList.toggle('hidden', currentView !== 'home');
+    }
+
+    function normalizeConfig(cfg) {
+      ['aiTalkButtons','classInButtons','discussionButtons'].forEach(key => {
+        if (!cfg[key] || !Array.isArray(cfg[key])) cfg[key] = [];
+      });
+      [cfg.aiTalkButtons, cfg.classInButtons, cfg.discussionButtons].forEach(arr => {
+        if (arr) arr.forEach(btn => { if (!btn.hasOwnProperty('bgUrl')) btn.bgUrl = ''; });
+      });
+      if (!cfg.gameParts || !Array.isArray(cfg.gameParts)) cfg.gameParts = DEFAULT_CONFIG.gameParts;
+      cfg.gameParts.forEach(part => {
+        if (!part.games) part.games = [];
+        part.games.forEach(game => {
+          if (!game.hasOwnProperty('bgUrl')) game.bgUrl = '';
+          if (!game.hasOwnProperty('embedCode')) game.embedCode = '';
+        });
+      });
+      ['homeBgUrl','gamePageBgUrl','rolePlayPageBgUrl','btnGameBgUrl','btnRolePlayBgUrl','btnClassInBgUrl','btnAITalkBgUrl'].forEach(f => {
+        if (!cfg.hasOwnProperty(f)) cfg[f] = '';
+      });
+      if (!cfg.settingPassword) cfg.settingPassword = DEFAULT_CONFIG.settingPassword;
+      return cfg;
+    }
+
+    function applyBackground(url, element, fallback = '') {
+      if (url && url.trim() !== '') {
+        element.style.background = `linear-gradient(145deg, rgba(246,249,252,0.85), rgba(230,240,245,0.85)), url(${url}) center/cover no-repeat`;
+      } else if (fallback) {
+        element.style.background = fallback;
+      } else {
+        element.style.background = '';
+      }
+    }
+
+    function clearContainerBackground() { viewContainer.style.background = ''; }
+    function applyContainerBackground(url) {
+      if (url) viewContainer.style.background = `linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(${url}) center/cover no-repeat`;
+      else clearContainerBackground();
+    }
+
+    function setBtnBackground(el, url) {
+      if (url && url.trim() !== '') {
+        el.style.backgroundImage = `url(${url})`;
+        el.classList.add('has-bg');
+      } else {
+        el.style.backgroundImage = '';
+        el.classList.remove('has-bg');
+      }
+    }
+
+    function loadConfigFromStorage() {
+      const stored = localStorage.getItem('english_integrated_config');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          config = { ...DEFAULT_CONFIG, ...parsed };
+          normalizeConfig(config);
+          configSource = 'local';
+          return;
+        } catch (e) {}
+      }
+      config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      normalizeConfig(config);
+      configSource = 'default';
+      saveConfigToStorage(true);
+    }
+
+    function saveConfigToStorage(silent = false) {
+      localStorage.setItem('english_integrated_config', JSON.stringify(config));
+      if (!silent && configSource !== 'cloud') configSource = 'local';
+      if (!silent) showSnackbar('💾 Saved to local storage');
+    }
+
+    let saveTimer;
+    function debouncedSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveConfigToStorage(false), 300);
+    }
+
+    function generateId(prefix = 'id') {
+      return prefix + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+    }
+
+    function setView(view, partId = null) {
+      currentView = view;
+      currentPartId = partId;
+      updateSettingCornerVisibility();
+      renderCurrentView();
+    }
+
+    function goBack() { if (currentView !== 'home') setView('home'); }
+
+    function showPasswordModal(callback) {
+      passwordCallback = callback;
+      passwordModal.classList.remove('hidden');
+      passwordInput.value = '';
+      passwordError.innerText = '';
+      passwordInput.focus();
+    }
+    function hidePasswordModal() { passwordModal.classList.add('hidden'); }
+
+    function enterSetting() {
+      if (settingAuthenticated) setView('setting');
+      else showPasswordModal(pwd => {
+        if (pwd === config.settingPassword) { settingAuthenticated = true; hidePasswordModal(); setView('setting'); }
+        else passwordError.innerText = 'Password is incorrect';
+      });
+    }
+
+    // 全局事件委托
+    viewContainer.addEventListener('click', (e) => {
+      if (currentView === 'setting') {
+        const toggleBtn = e.target.closest('[data-action="toggleSection"]');
+        if (toggleBtn) {
+          const header = toggleBtn.closest('.section-header');
+          const section = header.parentElement;
+          const body = section.querySelector('.section-body');
+          const sectionId = section.dataset.sectionId;
+          if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            header.classList.remove('collapsed');
+            if (!expandedSections.includes(sectionId)) expandedSections.push(sectionId);
+          } else {
+            body.classList.add('hidden');
+            header.classList.add('collapsed');
+            expandedSections = expandedSections.filter(id => id !== sectionId);
+          }
+          return;
+        }
+
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const btnId = btn.dataset.btnId;
+        const partId = btn.dataset.partId;
+        const gameId = btn.dataset.gameId;
+
+        if (action === 'addAiTalk') {
+          config.aiTalkButtons.push({ id: generateId('aitalk'), name: 'New AI', url: 'https://', bgUrl: '' });
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'deleteAiTalk') {
+          config.aiTalkButtons = config.aiTalkButtons.filter(b => b.id !== btnId);
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'addClassIn') {
+          config.classInButtons.push({ id: generateId('classin'), name: 'New Class', url: 'https://', bgUrl: '' });
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'deleteClassIn') {
+          config.classInButtons = config.classInButtons.filter(b => b.id !== btnId);
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'addDiscussion') {
+          config.discussionButtons.push({ id: generateId('discussion'), name: 'New AI Talk', url: 'https://', bgUrl: '' });
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'deleteDiscussion') {
+          config.discussionButtons = config.discussionButtons.filter(b => b.id !== btnId);
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'addGame') {
+          const part = config.gameParts.find(p => p.id === partId);
+          if (part) {
+            part.games.push({ id: generateId('game'), name: 'New Game', embedCode: '<iframe width="500" height="380" src="https://"></iframe>', bgUrl: '' });
+            saveConfigToStorage(); renderSettingView();
+          }
+        } else if (action === 'deleteGame') {
+          const part = config.gameParts.find(p => p.id === partId);
+          if (part) { part.games = part.games.filter(g => g.id !== gameId); saveConfigToStorage(); renderSettingView(); }
+        } else if (action === 'deletePart') {
+          if (config.gameParts.length <= 1) return alert('Keep at least one Part');
+          config.gameParts = config.gameParts.filter(p => p.id !== partId);
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'renamePart') {
+          const part = config.gameParts.find(p => p.id === partId);
+          if (part) { const n = prompt('New Name', part.name); if (n) { part.name = n; saveConfigToStorage(); renderSettingView(); } }
+        } else if (action === 'addPart') {
+          config.gameParts.push({ id: generateId('part'), name: 'New Part', games: [] });
+          saveConfigToStorage(); renderSettingView();
+        } else if (action === 'resetDefault') {
+          if (confirm('Restore Default Config?')) { config = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); normalizeConfig(config); saveConfigToStorage(); renderSettingView(); }
+        } else if (action === 'logoutSetting') {
+          settingAuthenticated = false; setView('home');
+        } else if (action === 'publishToCloud') { publishToCloud(); }
+        else if (action === 'exportConfig') {
+          const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+          const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `english_config.json`; a.click();
+        }
+      }
+    });
+
+    viewContainer.addEventListener('change', (e) => {
+      if (currentView !== 'setting' || e.target.id !== 'importFileInput') return;
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          config = { ...DEFAULT_CONFIG, ...imported };
+          normalizeConfig(config);
+          saveConfigToStorage();
+          renderSettingView();
+          showSnackbar('✅ Import Succeeded');
+        } catch(ex) { alert('Invalid Config file'); }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    // ---------- Render Views ----------
+    function renderHomeView() {
+      applyBackground(config.homeBgUrl, document.body);
+      viewContainer.innerHTML = `<div class="home-grid" id="homeGrid"></div>`;
+      const homeGrid = document.getElementById('homeGrid');
+      const buttons = [
+        { id: 'navGame', icon: 'fa-gamepad', label: 'Game', bgUrl: config.btnGameBgUrl, action: ()=> setView('game') },
+        { id: 'navAITalk', icon: 'fa-comment-dots', label: 'Role-Play', bgUrl: config.btnRolePlayBgUrl, action: ()=> setView('aitalk') },
+        { id: 'navClassIn', icon: 'fa-chalkboard-teacher', label: 'Class In', bgUrl: config.btnClassInBgUrl, action: ()=> setView('classin') },
+        { id: 'navDiscussion', icon: 'fa-comments', label: 'AI Talk', bgUrl: config.btnAITalkBgUrl, action: ()=> setView('discussion') }
+      ];
+      buttons.forEach(b => {
+        const div = document.createElement('div');
+        div.className = 'big-btn';
+        div.id = b.id;
+        div.innerHTML = `<i class="fas ${b.icon}"></i><span>${b.label}</span>`;
+        setBtnBackground(div, b.bgUrl);
+        div.onclick = b.action;
+        homeGrid.appendChild(div);
+      });
+    }
+
+    function renderGenericButtonView(title, icon, buttons, listClass, btnClass, bgUrlField) {
+      let buttonsHtml = buttons.length === 0
+        ? `<p class="empty-message"><i class="fas fa-info-circle"></i> No ${title.toLowerCase()} links yet. Add in Settings.</p>`
+        : buttons.map(btn => `
+            <div class="${btnClass}" data-url="${btn.url.replace(/"/g, '&quot;')}" data-bg="${btn.bgUrl || ''}">
+              <i class="fas fa-external-link-alt"></i>
+              <span>${btn.name}</span>
+            </div>
+          `).join('');
+      viewContainer.innerHTML = `
+        <div style="width:100%;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <i class="fas ${icon}" style="font-size:2rem; color:#1e3c72;"></i>
+            <h2 style="font-size:2rem; font-family:'Comic Sans MS','Comic Neue',cursive;">${title}</h2>
+          </div>
+          <div class="${listClass}">${buttonsHtml}</div>
+        </div>`;
+      document.querySelectorAll(`.${btnClass}`).forEach(btn => {
+        const url = btn.dataset.url;
+        const bgUrl = btn.dataset.bg;
+        setBtnBackground(btn, bgUrl);
+        btn.addEventListener('click', () => { if (url) window.open(url, '_blank'); });
+      });
+    }
+
+    function renderAiTalkView() {
+      applyContainerBackground(config.rolePlayPageBgUrl);
+      renderGenericButtonView('Role Play AI', 'fa-comment-dots', config.aiTalkButtons, 'aitalk-list', 'aitalk-btn');
+    }
+    function renderClassInView() {
+      applyContainerBackground('');
+      renderGenericButtonView('Class In', 'fa-chalkboard-teacher', config.classInButtons, 'classin-list', 'classin-btn');
+    }
+    function renderDiscussionView() {
+      applyContainerBackground('');
+      renderGenericButtonView('AI Talk', 'fa-comments', config.discussionButtons, 'discussion-list', 'discussion-btn');
+    }
+
+    function renderGameView() {
+      applyContainerBackground(config.gamePageBgUrl);
+      const parts = config.gameParts || [];
+      viewContainer.innerHTML = `<div style="width:100%; padding:8px;"><h2 style="font-family:'Comic Sans MS','Comic Neue',cursive;">🎮 Game Parts</h2><div class="part-grid">${parts.map(p=>`<div class="part-card" data-part-id="${p.id}"><i class="fas fa-puzzle-piece"></i><h3>${p.name}</h3></div>`).join('')}</div></div>`;
+      document.querySelectorAll('.part-card').forEach(c=> c.addEventListener('click', ()=> setView('partDetail', c.dataset.partId)));
+    }
+
+    function renderPartDetailView() {
+      clearContainerBackground();
+      const part = config.gameParts.find(p=>p.id===currentPartId);
+      if(!part) return setView('game');
+      const games = part.games||[];
+      viewContainer.innerHTML = `<div style="width:100%;"><h2 style="font-family:'Comic Sans MS','Comic Neue',cursive;">${part.name}</h2><div class="games-list">${games.map(g=>`
+        <div class="game-btn" data-game-id="${g.id}" data-bg="${g.bgUrl || ''}">
+          <i class="fas fa-play-circle"></i>
+          <span>${g.name}</span>
+        </div>
+      `).join('')}</div><div id="iframeDisplay" class="iframe-container">Click To Load</div></div>`;
+      document.querySelectorAll('.game-btn').forEach(b => {
+        setBtnBackground(b, b.dataset.bg);
+        b.addEventListener('click', ()=>{
+          const g = part.games.find(g=>g.id===b.dataset.gameId);
+          if(g) document.getElementById('iframeDisplay').innerHTML = g.embedCode;
+        });
+      });
+    }
+
+    function renderSettingView() {
+      if (!settingAuthenticated) return setView('home');
+      clearContainerBackground();
+      applyBackground('', document.body);
+      let sourceText = { cloud: '☁️ Cloud Config', local: '💾 Local Storage', default: '📄 Default Config' }[configSource];
+
+      const sections = [];
+
+      sections.push({
+        title: '<i class="fas fa-key"></i> General Setup',
+        id: 'generalSetup',
+        body: `<div class="input-group"><label>Set Password</label><input type="text" id="settingPwd" value="${config.settingPassword}"></div>`
+      });
+
+      const bgFields = [
+        { key: 'homeBgUrl', label: 'Home Page Background', id: 'homeBgUrl' },
+        { key: 'gamePageBgUrl', label: 'Game Page Background', id: 'gamePageBgUrl' },
+        { key: 'rolePlayPageBgUrl', label: 'Role Play AI Page Background', id: 'rolePlayPageBgUrl' },
+      ];
+      const bgHtml = bgFields.map(f => `
+        <div class="input-group">
+          <label>${f.label}</label>
+          <div class="bg-upload-wrap" data-field-key="${f.key}">
+            <input type="text" class="image-url-input" id="${f.id}" value="${config[f.key] || ''}" readonly>
+            <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+            <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+      sections.push({ title: '<i class="fas fa-image"></i> Page Backgrounds', id: 'pageBackgrounds', body: `<p style="margin-bottom:16px;">Upload or enter image URL. Upload will overwrite the same file name.</p>${bgHtml}` });
+
+      const btnBgFields = [
+        { key: 'btnGameBgUrl', label: 'Game Button Background', id: 'btnGameBgUrl' },
+        { key: 'btnRolePlayBgUrl', label: 'Role-Play Button Background', id: 'btnRolePlayBgUrl' },
+        { key: 'btnClassInBgUrl', label: 'Class In Button Background', id: 'btnClassInBgUrl' },
+        { key: 'btnAITalkBgUrl', label: 'AI Talk Button Background', id: 'btnAITalkBgUrl' },
+      ];
+      const btnBgHtml = btnBgFields.map(f => `
+        <div class="input-group">
+          <label>${f.label}</label>
+          <div class="bg-upload-wrap" data-field-key="${f.key}">
+            <input type="text" class="image-url-input" id="${f.id}" value="${config[f.key] || ''}" readonly>
+            <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+            <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+      sections.push({ title: '<i class="fas fa-th-large"></i> Button Backgrounds', id: 'buttonBackgrounds', body: `<p style="margin-bottom:16px;">Custom backgrounds for the four main buttons.</p>${btnBgHtml}` });
+
+      let aiTalkHtml = '';
+      (config.aiTalkButtons || []).forEach((btn, idx) => {
+        aiTalkHtml += `
+          <div class="aitalk-editor-item">
+            <div class="flex-row" style="justify-content:space-between;">
+              <strong><i class="fas fa-link"></i> Role Play AI ${idx+1}</strong>
+              <button class="btn-icon" data-action="deleteAiTalk" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="input-group"><label>Rename</label><input type="text" data-field="aiTalkName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group"><label>Input Link</label><input type="text" data-field="aiTalkUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group">
+              <label>Background Image</label>
+              <div class="bg-upload-wrap" data-field-key="aitalkBtnBg" data-dynamic-id="${btn.id}">
+                <input type="text" class="image-url-input" data-field="aiTalkBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}" readonly>
+                <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+                <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+      });
+      sections.push({ title: '<i class="fas fa-comment-dots"></i> Role Play AI Management', id: 'aiTalkManagement', body: `<p style="margin-bottom:16px;">Add or remove Role Play AI buttons.</p>${aiTalkHtml}<button class="btn-outline" data-action="addAiTalk"><i class="fas fa-plus-circle"></i> Add Role Play AI</button>` });
+
+      let classInHtml = '';
+      (config.classInButtons || []).forEach((btn, idx) => {
+        classInHtml += `
+          <div class="aitalk-editor-item">
+            <div class="flex-row" style="justify-content:space-between;">
+              <strong><i class="fas fa-link"></i> ClassIn ${idx+1}</strong>
+              <button class="btn-icon" data-action="deleteClassIn" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="input-group"><label>Rename</label><input type="text" data-field="classInName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group"><label>Input Link</label><input type="text" data-field="classInUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group">
+              <label>Background Image</label>
+              <div class="bg-upload-wrap" data-field-key="classinBtnBg" data-dynamic-id="${btn.id}">
+                <input type="text" class="image-url-input" data-field="classInBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}" readonly>
+                <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+                <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+      });
+      sections.push({ title: '<i class="fas fa-chalkboard-teacher"></i> ClassIn Management', id: 'classInManagement', body: `<p style="margin-bottom:16px;">Add or remove ClassIn links.</p>${classInHtml}<button class="btn-outline" data-action="addClassIn"><i class="fas fa-plus-circle"></i> Add ClassIn Button</button>` });
+
+      let discussionHtml = '';
+      (config.discussionButtons || []).forEach((btn, idx) => {
+        discussionHtml += `
+          <div class="aitalk-editor-item">
+            <div class="flex-row" style="justify-content:space-between;">
+              <strong><i class="fas fa-link"></i> AI Talk ${idx+1}</strong>
+              <button class="btn-icon" data-action="deleteDiscussion" data-btn-id="${btn.id}"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="input-group"><label>Rename</label><input type="text" data-field="discussionName" data-btn-id="${btn.id}" value="${btn.name.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group"><label>Input Link</label><input type="text" data-field="discussionUrl" data-btn-id="${btn.id}" value="${btn.url.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group">
+              <label>Background Image</label>
+              <div class="bg-upload-wrap" data-field-key="discussionBtnBg" data-dynamic-id="${btn.id}">
+                <input type="text" class="image-url-input" data-field="discussionBgUrl" data-btn-id="${btn.id}" value="${btn.bgUrl || ''}" readonly>
+                <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+                <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+      });
+      sections.push({ title: '<i class="fas fa-comments"></i> AI Talk Management', id: 'discussionManagement', body: `<p style="margin-bottom:16px;">Add or remove AI Talk links.</p>${discussionHtml}<button class="btn-outline" data-action="addDiscussion"><i class="fas fa-plus-circle"></i> Add AI Talk Button</button>` });
+
+      let partsHtml = '';
+      config.gameParts.forEach(part => {
+        let gamesHtml = '';
+        (part.games||[]).forEach(game => {
+          gamesHtml += `<div class="game-editor-item">
+            <div class="flex-row"><strong>${game.name}</strong><button class="btn-icon" data-action="deleteGame" data-part-id="${part.id}" data-game-id="${game.id}"><i class="fas fa-trash"></i></button></div>
+            <div class="input-group"><label>Game ID</label><input type="text" data-part-id="${part.id}" data-game-id="${game.id}" data-field="gameName" value="${game.name.replace(/"/g, '&quot;')}"></div>
+            <div class="input-group"><label>Embed Code</label><textarea rows="3" data-part-id="${part.id}" data-game-id="${game.id}" data-field="embedCode">${game.embedCode.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
+            <div class="input-group">
+              <label>Background Image</label>
+              <div class="bg-upload-wrap" data-field-key="gameBtnBg" data-dynamic-id="${game.id}">
+                <input type="text" class="image-url-input" data-part-id="${part.id}" data-game-id="${game.id}" data-field="gameBgUrl" value="${game.bgUrl || ''}" readonly>
+                <button class="btn-outline image-upload-btn" type="button"><i class="fas fa-upload"></i></button>
+                <button class="btn-outline image-delete-btn" type="button"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+        });
+        partsHtml += `<div class="part-editor">
+          <div class="flex-row"><h3>${part.name}</h3><div><button class="btn-icon" data-action="renamePart" data-part-id="${part.id}"><i class="fas fa-pen"></i></button><button class="btn-icon" data-action="deletePart" data-part-id="${part.id}"><i class="fas fa-trash-alt"></i></button></div></div>
+          <div class="input-group"><label>Part Title</label><input type="text" data-part-id="${part.id}" data-field="partName" value="${part.name}"></div>
+          ${gamesHtml}
+          <button class="btn-outline" data-action="addGame" data-part-id="${part.id}"><i class="fas fa-plus"></i> Add Game</button>
+        </div>`;
+      });
+      sections.push({ title: '<i class="fas fa-layer-group"></i> Game Management', id: 'gameManagement', body: `${partsHtml}<div class="flex-row" style="margin-top:20px"><button class="btn-primary" data-action="addPart"><i class="fas fa-plus"></i> Create New Part</button><button class="btn-outline" data-action="resetDefault"><i class="fas fa-undo-alt"></i> Reset Default</button></div>` });
+
+      sections.push({ title: '<i class="fas fa-cloud-upload-alt"></i> Publish to Cloud', id: 'publishCloud', body: `<p style="margin-bottom:16px;">Click the button below to publish.</p><button class="btn-primary" data-action="publishToCloud"><i class="fas fa-cloud-upload-alt"></i> One-Click Publish</button><hr style="margin: 24px 0; border: none; border-top: 1px solid #ddd;"><div class="flex-row"><button class="btn-outline" data-action="exportConfig"><i class="fas fa-download"></i> Export JSON</button><label class="btn-outline" for="importFileInput" style="cursor:pointer;"><i class="fas fa-upload"></i> Import JSON</label><input type="file" id="importFileInput" accept=".json,application/json" style="display:none;"></div>` });
+
+      const sectionsHtml = sections.map(s => `
+        <div class="setting-section" data-section-id="${s.id}">
+          <div class="section-header collapsed" data-action="toggleSection">
+            <div class="setting-title">${s.title}</div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="section-body hidden">${s.body}</div>
+        </div>
+      `).join('');
+
+      viewContainer.innerHTML = `<div style="width:100%;"><div class="config-source-badge"><i class="fas fa-database"></i> Settings from：${sourceText}</div>${sectionsHtml}<div class="flex-row" style="justify-content:flex-end;"><button class="btn-primary" data-action="logoutSetting">Exit Settings</button></div></div>`;
+
+      expandedSections.forEach(id => {
+        const section = document.querySelector(`.setting-section[data-section-id="${id}"]`);
+        if (section) {
+          const header = section.querySelector('.section-header');
+          const body = section.querySelector('.section-body');
+          if (header && body) { header.classList.remove('collapsed'); body.classList.remove('hidden'); }
+        }
+      });
+
+      viewContainer.querySelectorAll('.bg-upload-wrap').forEach(wrap => {
+        const fieldKey = wrap.dataset.fieldKey;
+        const dynamicId = wrap.dataset.dynamicId || null;
+        setupImageControls(wrap, fieldKey, dynamicId);
+      });
+
+      const baseInputs = {
+        settingPwd: v => config.settingPassword = v,
+        homeBgUrl: v => config.homeBgUrl = v,
+        gamePageBgUrl: v => config.gamePageBgUrl = v,
+        rolePlayPageBgUrl: v => config.rolePlayPageBgUrl = v,
+        btnGameBgUrl: v => config.btnGameBgUrl = v,
+        btnRolePlayBgUrl: v => config.btnRolePlayBgUrl = v,
+        btnClassInBgUrl: v => config.btnClassInBgUrl = v,
+        btnAITalkBgUrl: v => config.btnAITalkBgUrl = v,
+      };
+      Object.keys(baseInputs).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', e => { baseInputs[id](e.target.value); debouncedSave(); });
+      });
+
+      viewContainer.querySelectorAll('[data-field="gameName"], [data-field="embedCode"], [data-field="gameBgUrl"]').forEach(input => {
+        input.addEventListener('input', e => {
+          const partId = e.target.dataset.partId;
+          const gameId = e.target.dataset.gameId;
+          const field = e.target.dataset.field;
+          if (!partId || !gameId) return;
+          const part = config.gameParts.find(p => p.id === partId);
+          if (!part) return;
+          const game = part.games.find(g => g.id === gameId);
+          if (!game) return;
+          if (field === 'gameName') game.name = e.target.value;
+          else if (field === 'embedCode') game.embedCode = e.target.value;
+          else if (field === 'gameBgUrl') game.bgUrl = e.target.value;
+          debouncedSave();
+        });
+      });
+
+      viewContainer.querySelectorAll('[data-field="partName"]').forEach(input => {
+        input.addEventListener('input', e => {
+          const partId = e.target.dataset.partId;
+          const part = config.gameParts.find(p => p.id === partId);
+          if (part) { part.name = e.target.value; debouncedSave(); }
+        });
+      });
+
+      const bindButtonInput = (selector, array, nameField, urlField, bgField) => {
+        viewContainer.querySelectorAll(selector).forEach(input => {
+          input.addEventListener('input', e => {
+            const btnId = e.target.dataset.btnId;
+            const field = e.target.dataset.field;
+            let button = (array || []).find(b => b.id === btnId);
+            if (!button) return;
+            if (field === nameField) button.name = e.target.value;
+            else if (field === urlField) button.url = e.target.value;
+            else if (field === bgField) button.bgUrl = e.target.value;
+            debouncedSave();
+          });
+        });
+      };
+
+      bindButtonInput('[data-field="aiTalkName"], [data-field="aiTalkUrl"], [data-field="aiTalkBgUrl"]', config.aiTalkButtons, 'aiTalkName', 'aiTalkUrl', 'aiTalkBgUrl');
+      bindButtonInput('[data-field="classInName"], [data-field="classInUrl"], [data-field="classInBgUrl"]', config.classInButtons, 'classInName', 'classInUrl', 'classInBgUrl');
+      bindButtonInput('[data-field="discussionName"], [data-field="discussionUrl"], [data-field="discussionBgUrl"]', config.discussionButtons, 'discussionName', 'discussionUrl', 'discussionBgUrl');
+    }
+
+    function renderCurrentView() {
+      if (currentView === 'home') renderHomeView();
+      else if (currentView === 'aitalk') renderAiTalkView();
+      else if (currentView === 'classin') renderClassInView();
+      else if (currentView === 'discussion') renderDiscussionView();
+      else if (currentView === 'game') renderGameView();
+      else if (currentView === 'partDetail') renderPartDetailView();
+      else if (currentView === 'setting') renderSettingView();
+    }
+
+    backButton.onclick = goBack;
+    cloudRefreshBtn.onclick = () => loadConfigFromCloud(true);
+    settingCornerBtn.onclick = enterSetting;
+    submitPassword.onclick = () => { if(passwordCallback) passwordCallback(passwordInput.value); };
+    cancelPassword.onclick = hidePasswordModal;
+    passwordInput.addEventListener('keypress', e => { if(e.key==='Enter') submitPassword.click(); });
+
+    // 启动时加载云端配置，失败则用本地存储
+    loadConfigFromCloud(true).catch(() => loadConfigFromStorage());
+    setView('home');
+
+  })();
+</script>
+</body>
+</html>
